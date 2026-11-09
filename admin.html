@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>NOIRE Admin Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --bg:#0a0b0f; --surface:#111318; --surface2:#181c23; --surface3:#1e232d;
+      --border:#252a35; --border2:#2e3545;
+      --gold:#c9a84c; --gold-light:#e8c97a; --gold-dim:rgba(201,168,76,.15);
+      --cream:#f0ebe0; --white:#fff;
+      --green:#4caf7d; --green-dim:rgba(76,175,125,.15);
+      --red:#e05252; --red-dim:rgba(224,82,82,.15);
+      --blue:#5284c9; --blue-dim:rgba(82,132,201,.15);
+      --orange:#e8a84c; --orange-dim:rgba(232,168,76,.15);
+      --purple:#9b6dff; --purple-dim:rgba(155,109,255,.15);
+      --text:#c8cdd8; --text-muted:#6b7280; --text-dim:#4b5563;
+      --font:'Inter',sans-serif; --font-serif:'Cormorant Garamond',serif;
+      --ease:cubic-bezier(.25,.46,.45,.94); --ease-out:cubic-bezier(.16,1,.3,1);
+      --sidebar:260px;
+    }
+    html{height:100%}
+    body{min-height:100vh;background:var(--bg);color:var(--text);font-family:var(--font);font-weight:300;display:flex;overflow-x:hidden}
+
+    /* ===== SIDEBAR ===== */
+    #sidebar{
+      width:var(--sidebar);min-height:100vh;background:var(--surface);
+      border-right:1px solid var(--border);
+      display:flex;flex-direction:column;
+      position:fixed;top:0;left:0;bottom:0;z-index:100;
+      transition:transform .3s var(--ease-out);
+    }
+    .sidebar-brand{
+      padding:2rem 1.5rem;border-bottom:1px solid var(--border);
+      display:flex;align-items:center;gap:1rem;
+    }
+    .brand-logo{
+      width:38px;height:38px;background:var(--gold);border-radius:6px;
+      display:flex;align-items:center;justify-content:center;
+      font-family:var(--font-serif);font-size:1.1rem;font-weight:400;color:var(--bg);
+      flex-shrink:0;
+    }
+    .brand-text{}
+    .brand-name{font-family:var(--font-serif);font-size:1.1rem;letter-spacing:.2em;color:var(--cream)}
+    .brand-sub{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--text-muted);margin-top:2px}
+    .sidebar-nav{flex:1;padding:1.5rem 0;overflow-y:auto}
+    .nav-group-label{font-size:.55rem;letter-spacing:.3em;text-transform:uppercase;color:var(--text-dim);padding:.5rem 1.5rem;margin-top:.5rem}
+    .nav-item{
+      display:flex;align-items:center;gap:.85rem;
+      padding:.7rem 1.5rem;margin:.1rem .75rem;border-radius:8px;
+      cursor:pointer;transition:background .2s,color .2s;
+      font-size:.8rem;color:var(--text-muted);letter-spacing:.02em;
+      position:relative;
+    }
+    .nav-item:hover{background:var(--surface2);color:var(--text)}
+    .nav-item.active{background:var(--gold-dim);color:var(--gold)}
+    .nav-item.active .nav-icon{color:var(--gold)}
+    .nav-icon{width:18px;height:18px;flex-shrink:0;color:var(--text-dim);transition:color .2s}
+    .nav-item:hover .nav-icon{color:var(--text)}
+    .nav-badge{margin-left:auto;background:var(--red);color:var(--white);font-size:.55rem;padding:.15rem .4rem;border-radius:10px;font-weight:600}
+    .sidebar-footer{padding:1.5rem;border-top:1px solid var(--border)}
+    .admin-profile{display:flex;align-items:center;gap:.75rem}
+    .admin-avatar{width:36px;height:36px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;color:var(--bg);font-weight:600;font-size:.85rem;flex-shrink:0}
+    .admin-info .admin-name{font-size:.8rem;color:var(--cream);font-weight:500}
+    .admin-info .admin-role{font-size:.65rem;color:var(--text-muted);margin-top:2px}
+    .logout-btn{margin-left:auto;background:none;border:none;color:var(--text-muted);cursor:pointer;padding:4px;border-radius:4px;transition:color .2s}
+    .logout-btn:hover{color:var(--red)}
+
+    /* ===== MAIN ===== */
+    #main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh}
+
+    /* TOPBAR */
+    .topbar{
+      background:var(--surface);border-bottom:1px solid var(--border);
+      padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;
+      position:sticky;top:0;z-index:50;
+    }
+    .topbar-left{}
+    .page-title{font-size:1rem;font-weight:500;color:var(--cream)}
+    .page-breadcrumb{font-size:.7rem;color:var(--text-muted);margin-top:2px}
+    .topbar-right{display:flex;align-items:center;gap:1rem}
+    .topbar-btn{
+      background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+      padding:.5rem .85rem;font-size:.75rem;color:var(--text);cursor:pointer;
+      display:flex;align-items:center;gap:.5rem;transition:background .2s,border-color .2s;
+      font-family:var(--font);
+    }
+    .topbar-btn:hover{background:var(--surface3);border-color:var(--border2)}
+    .topbar-btn.primary{background:var(--gold);border-color:var(--gold);color:var(--bg);font-weight:500}
+    .topbar-btn.primary:hover{background:var(--gold-light)}
+    .notification-btn{position:relative}
+    .notif-dot{position:absolute;top:6px;right:6px;width:7px;height:7px;background:var(--red);border-radius:50%;border:2px solid var(--surface)}
+    .search-bar{
+      display:flex;align-items:center;gap:.5rem;
+      background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+      padding:.5rem 1rem;
+    }
+    .search-bar input{background:none;border:none;color:var(--text);font-size:.8rem;outline:none;width:180px;font-family:var(--font)}
+    .search-bar input::placeholder{color:var(--text-muted)}
+    .search-bar svg{color:var(--text-muted);flex-shrink:0}
+
+    /* CONTENT */
+    .content{padding:2rem;flex:1}
+    .page{display:none}
+    .page.active{display:block}
+
+    /* ===== STATS GRID ===== */
+    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem;margin-bottom:2rem}
+    .stat-card{
+      background:var(--surface);border:1px solid var(--border);border-radius:12px;
+      padding:1.5rem;transition:border-color .3s,transform .3s var(--ease-out);
+      cursor:default;
+    }
+    .stat-card:hover{border-color:var(--border2);transform:translateY(-3px)}
+    .stat-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.25rem}
+    .stat-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .stat-icon.gold{background:var(--gold-dim)}
+    .stat-icon.green{background:var(--green-dim)}
+    .stat-icon.blue{background:var(--blue-dim)}
+    .stat-icon.red{background:var(--red-dim)}
+    .stat-icon.purple{background:var(--purple-dim)}
+    .stat-icon.orange{background:var(--orange-dim)}
+    .stat-badge{font-size:.65rem;padding:.25rem .6rem;border-radius:20px;font-weight:500}
+    .stat-badge.up{background:var(--green-dim);color:var(--green)}
+    .stat-badge.down{background:var(--red-dim);color:var(--red)}
+    .stat-value{font-size:1.9rem;font-weight:600;color:var(--cream);margin-bottom:.3rem;line-height:1}
+    .stat-label{font-size:.72rem;color:var(--text-muted);letter-spacing:.04em}
+    .stat-sub{font-size:.68rem;color:var(--text-muted);margin-top:.5rem}
+
+    /* ===== CHARTS ===== */
+    .charts-row{display:grid;grid-template-columns:2fr 1fr;gap:1.25rem;margin-bottom:2rem}
+    .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem}
+    .chart-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem}
+    .chart-title{font-size:.9rem;font-weight:500;color:var(--cream)}
+    .chart-sub{font-size:.7rem;color:var(--text-muted);margin-top:2px}
+    .chart-filter{display:flex;gap:.5rem}
+    .chart-filter-btn{background:none;border:1px solid var(--border);border-radius:6px;padding:.3rem .7rem;font-size:.65rem;color:var(--text-muted);cursor:pointer;transition:all .2s;font-family:var(--font)}
+    .chart-filter-btn.active,.chart-filter-btn:hover{background:var(--gold-dim);border-color:var(--gold);color:var(--gold)}
+
+    /* BAR CHART */
+    .bar-chart{display:flex;align-items:flex-end;gap:8px;height:160px;padding-bottom:.5rem}
+    .bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:.5rem}
+    .bar{width:100%;border-radius:4px 4px 0 0;transition:height .8s var(--ease-out),background .3s;position:relative;min-height:4px;cursor:pointer}
+    .bar:hover::after{content:attr(data-val);position:absolute;top:-28px;left:50%;transform:translateX(-50%);background:var(--surface3);color:var(--cream);font-size:.65rem;padding:.2rem .5rem;border-radius:4px;white-space:nowrap;font-family:var(--font)}
+    .bar-label{font-size:.6rem;color:var(--text-muted)}
+
+    /* DONUT CHART */
+    .donut-wrap{display:flex;flex-direction:column;align-items:center;gap:1.5rem}
+    .donut{position:relative;width:140px;height:140px}
+    .donut svg{transform:rotate(-90deg)}
+    .donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    .donut-pct{font-size:1.6rem;font-weight:600;color:var(--cream)}
+    .donut-pct-label{font-size:.6rem;color:var(--text-muted)}
+    .donut-legend{width:100%}
+    .legend-item{display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem}
+    .legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .legend-label{font-size:.72rem;color:var(--text-muted);flex:1}
+    .legend-val{font-size:.72rem;color:var(--cream);font-weight:500}
+
+    /* LINE CHART */
+    .line-chart-wrap{height:140px;position:relative}
+    .line-chart-wrap svg{width:100%;height:100%}
+
+    /* ===== TABLES ===== */
+    .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem}
+    .section-title-sm{font-size:.9rem;font-weight:500;color:var(--cream)}
+    .table-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:2rem}
+    .table-toolbar{padding:1rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:1rem}
+    .table-search{display:flex;align-items:center;gap:.5rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.45rem .8rem;flex:1;max-width:280px}
+    .table-search input{background:none;border:none;color:var(--text);font-size:.78rem;outline:none;width:100%;font-family:var(--font)}
+    .table-search input::placeholder{color:var(--text-muted)}
+    .table-filters{display:flex;gap:.5rem}
+    .filter-select{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.45rem .8rem;font-size:.75rem;color:var(--text);cursor:pointer;outline:none;font-family:var(--font)}
+    table{width:100%;border-collapse:collapse}
+    th{padding:.85rem 1.5rem;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);text-align:left;font-weight:500;border-bottom:1px solid var(--border);white-space:nowrap}
+    td{padding:.9rem 1.5rem;font-size:.8rem;color:var(--text);border-bottom:1px solid var(--border);vertical-align:middle}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:var(--surface2)}
+    .order-id{font-family:monospace;font-size:.75rem;color:var(--text-muted)}
+    .status-badge{padding:.3rem .7rem;border-radius:20px;font-size:.65rem;font-weight:500;display:inline-flex;align-items:center;gap:.35rem;white-space:nowrap}
+    .status-badge::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor}
+    .status-badge.pending{background:var(--orange-dim);color:var(--orange)}
+    .status-badge.processing{background:var(--blue-dim);color:var(--blue)}
+    .status-badge.shipped{background:var(--purple-dim);color:var(--purple)}
+    .status-badge.delivered{background:var(--green-dim);color:var(--green)}
+    .status-badge.cancelled{background:var(--red-dim);color:var(--red)}
+    .product-thumb{width:40px;height:52px;object-fit:cover;border-radius:4px;display:block}
+    .product-cell{display:flex;align-items:center;gap:.85rem}
+    .product-cell-name{font-size:.8rem;color:var(--cream);font-weight:400}
+    .product-cell-sub{font-size:.68rem;color:var(--text-muted);margin-top:2px}
+    .action-btn{background:none;border:none;color:var(--text-muted);cursor:pointer;padding:.3rem;border-radius:4px;transition:color .2s,background .2s}
+    .action-btn:hover{color:var(--cream);background:var(--surface3)}
+    .action-btn.danger:hover{color:var(--red);background:var(--red-dim)}
+    .pagination{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;border-top:1px solid var(--border)}
+    .page-info{font-size:.75rem;color:var(--text-muted)}
+    .page-btns{display:flex;gap:.5rem}
+    .page-btn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:.35rem .7rem;font-size:.72rem;color:var(--text-muted);cursor:pointer;transition:all .2s;font-family:var(--font)}
+    .page-btn:hover,.page-btn.active{background:var(--gold-dim);border-color:var(--gold);color:var(--gold)}
+
+    /* ===== WALLET ===== */
+    .wallet-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin-bottom:2rem}
+    .wallet-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.75rem}
+    .wallet-card.featured{background:linear-gradient(135deg,#1a1500,#2d2200);border-color:rgba(201,168,76,.3)}
+    .wallet-amount{font-size:2.2rem;font-weight:600;color:var(--cream);line-height:1;margin-bottom:.4rem}
+    .wallet-amount.gold{color:var(--gold)}
+    .wallet-label{font-size:.72rem;color:var(--text-muted);letter-spacing:.06em;text-transform:uppercase}
+    .wallet-change{font-size:.72rem;color:var(--green);margin-top:.75rem;display:flex;align-items:center;gap:.3rem}
+    .wallet-change.down{color:var(--red)}
+    .withdraw-btn{display:flex;align-items:center;gap:.5rem;margin-top:1.25rem;background:var(--gold);border:none;padding:.7rem 1.25rem;border-radius:8px;color:var(--bg);font-size:.75rem;font-weight:500;cursor:pointer;transition:background .2s;font-family:var(--font)}
+    .withdraw-btn:hover{background:var(--gold-light)}
+    .txn-item{display:flex;align-items:center;gap:1rem;padding:.85rem 0;border-bottom:1px solid var(--border)}
+    .txn-item:last-child{border-bottom:none}
+    .txn-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .txn-icon.credit{background:var(--green-dim);color:var(--green)}
+    .txn-icon.debit{background:var(--red-dim);color:var(--red)}
+    .txn-info{flex:1}
+    .txn-name{font-size:.8rem;color:var(--cream)}
+    .txn-date{font-size:.68rem;color:var(--text-muted);margin-top:2px}
+    .txn-amount{font-size:.9rem;font-weight:500}
+    .txn-amount.credit{color:var(--green)}
+    .txn-amount.debit{color:var(--red)}
+
+    /* ===== PRODUCTS ADMIN ===== */
+    .products-admin-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem;margin-bottom:2rem}
+    .product-admin-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .3s}
+    .product-admin-card:hover{border-color:var(--border2)}
+    .product-admin-img{aspect-ratio:3/4;overflow:hidden}
+    .product-admin-img img{width:100%;height:100%;object-fit:cover;transition:transform .5s var(--ease-out)}
+    .product-admin-card:hover .product-admin-img img{transform:scale(1.05)}
+    .product-admin-info{padding:1rem}
+    .product-admin-name{font-size:.85rem;color:var(--cream);font-weight:400;margin-bottom:.3rem}
+    .product-admin-price{font-size:.9rem;color:var(--gold);font-family:var(--font-serif);margin-bottom:.5rem}
+    .product-admin-stock{display:flex;align-items:center;gap:.4rem;font-size:.68rem;color:var(--text-muted)}
+    .stock-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+    .stock-dot.in{background:var(--green)}
+    .stock-dot.low{background:var(--orange)}
+    .stock-dot.out{background:var(--red)}
+    .product-admin-actions{display:flex;gap:.5rem;padding:.75rem 1rem;border-top:1px solid var(--border)}
+    .prod-action-btn{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:.4rem;font-size:.68rem;color:var(--text-muted);cursor:pointer;transition:all .2s;font-family:var(--font)}
+    .prod-action-btn:hover{background:var(--gold-dim);border-color:var(--gold);color:var(--gold)}
+    .prod-action-btn.danger:hover{background:var(--red-dim);border-color:var(--red);color:var(--red)}
+
+    /* ===== CUSTOMERS ===== */
+    .customer-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin-bottom:2rem}
+
+    /* ===== SETTINGS ===== */
+    .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
+    .settings-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.75rem}
+    .settings-section-title{font-size:.85rem;font-weight:500;color:var(--cream);margin-bottom:1.25rem;padding-bottom:.75rem;border-bottom:1px solid var(--border)}
+    .form-group{margin-bottom:1.25rem}
+    .form-label{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);display:block;margin-bottom:.5rem}
+    .form-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:.65rem 1rem;font-size:.82rem;color:var(--cream);outline:none;transition:border-color .2s;font-family:var(--font)}
+    .form-input:focus{border-color:var(--gold)}
+    .form-toggle{display:flex;align-items:center;justify-content:space-between;padding:.75rem 0;border-bottom:1px solid var(--border)}
+    .form-toggle:last-child{border-bottom:none}
+    .toggle-info .toggle-label{font-size:.82rem;color:var(--cream)}
+    .toggle-info .toggle-sub{font-size:.68rem;color:var(--text-muted);margin-top:2px}
+    .toggle-switch{width:40px;height:22px;background:var(--border2);border-radius:11px;position:relative;cursor:pointer;transition:background .3s;flex-shrink:0}
+    .toggle-switch.on{background:var(--gold)}
+    .toggle-switch::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--white);transition:left .3s;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+    .toggle-switch.on::after{left:20px}
+
+    /* ANALYTICS MINI */
+    .analytics-row{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:2rem}
+    .mini-chart-bar{height:6px;background:var(--surface3);border-radius:3px;overflow:hidden;margin-top:.5rem}
+    .mini-chart-fill{height:100%;border-radius:3px;transition:width 1s var(--ease-out)}
+    .top-product-item{display:flex;align-items:center;gap:1rem;padding:.75rem 0;border-bottom:1px solid var(--border)}
+    .top-product-item:last-child{border-bottom:none}
+    .top-product-rank{font-size:.75rem;color:var(--text-muted);width:20px;flex-shrink:0}
+    .top-product-img{width:40px;height:52px;object-fit:cover;border-radius:4px;flex-shrink:0}
+    .top-product-info{flex:1}
+    .top-product-name{font-size:.8rem;color:var(--cream)}
+    .top-product-sales{font-size:.68rem;color:var(--text-muted);margin-top:2px}
+    .top-product-rev{font-size:.85rem;color:var(--gold);font-weight:500}
+
+    /* EMPTY STATE */
+    .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4rem;gap:1rem;color:var(--text-muted)}
+    .empty-state-icon{opacity:.3}
+    .empty-state p{font-size:.85rem}
+
+    /* RESPONSIVE */
+    @media(max-width:1200px){ .stats-grid{grid-template-columns:repeat(2,1fr)} .charts-row{grid-template-columns:1fr} .products-admin-grid{grid-template-columns:repeat(3,1fr)} }
+    @media(max-width:768px){ #sidebar{transform:translateX(-100%)} #sidebar.open{transform:translateX(0)} #main{margin-left:0} .stats-grid{grid-template-columns:1fr 1fr} .wallet-grid{grid-template-columns:1fr} .products-admin-grid{grid-template-columns:repeat(2,1fr)} .settings-grid{grid-template-columns:1fr} .analytics-row{grid-template-columns:1fr} .customer-stats{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-logo">N</div>
+      <div class="brand-text">
+        <div class="brand-name">NOIRE</div>
+        <div class="brand-sub">Admin Console</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-group-label">Main</div>
+      <div class="nav-item active" data-page="dashboard">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </div>
+      <div class="nav-item" data-page="orders">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 4H18a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 12h6m-6 4h4"/></svg>
+        Orders
+        <span class="nav-badge" id="orders-badge">0</span>
+      </div>
+      <div class="nav-item" data-page="products">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><circle cx="7" cy="7" r="1.5"/></svg>
+        Products
+      </div>
+      <div class="nav-item" data-page="wallet">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 7H4a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 3H8L6 7h12l-2-4z"/><circle cx="16.5" cy="13" r="1.5"/></svg>
+        Wallet
+      </div>
+      <div class="nav-item" data-page="customers">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Customers
+      </div>
+      <div class="nav-group-label">Analytics</div>
+      <div class="nav-item" data-page="analytics">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Analytics
+      </div>
+      <div class="nav-group-label">System</div>
+      <div class="nav-item" data-page="settings">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </div>
+      <div class="nav-item" onclick="window.open('index.html','_blank')">
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        View Store ↗
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="admin-profile">
+        <div class="admin-avatar">A</div>
+        <div class="admin-info">
+          <div class="admin-name">Admin User</div>
+          <div class="admin-role">Super Admin</div>
+        </div>
+        <button class="logout-btn" title="Logout" onclick="showAdminToast('Logged out')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div id="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="page-title" id="topbar-title">Dashboard</div>
+        <div class="page-breadcrumb" id="topbar-breadcrumb">NOIRE Admin → Dashboard</div>
+      </div>
+      <div class="topbar-right">
+        <div class="search-bar">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" placeholder="Search orders, products..." id="global-search"/>
+        </div>
+        <button class="topbar-btn notification-btn" onclick="showAdminToast('No new notifications')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="notif-dot"></span>
+        </button>
+        <button class="topbar-btn primary" onclick="showAdminToast('Report exported!')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export Report
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- ===== DASHBOARD PAGE ===== -->
+      <div class="page active" id="page-dashboard">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-header">
+              <div class="stat-icon gold"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="1.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+              <span class="stat-badge up">↑ 18.2%</span>
+            </div>
+            <div class="stat-value" id="dash-revenue">$0</div>
+            <div class="stat-label">Total Revenue</div>
+            <div class="stat-sub">vs last month</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header">
+              <div class="stat-icon blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5284c9" stroke-width="1.5"><path d="M16 4H18a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg></div>
+              <span class="stat-badge up">↑ 24%</span>
+            </div>
+            <div class="stat-value" id="dash-orders">0</div>
+            <div class="stat-label">Total Orders</div>
+            <div class="stat-sub">vs last month</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header">
+              <div class="stat-icon green"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4caf7d" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+              <span class="stat-badge up">↑ 12%</span>
+            </div>
+            <div class="stat-value" id="dash-customers">1,247</div>
+            <div class="stat-label">Total Customers</div>
+            <div class="stat-sub">vs last month</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header">
+              <div class="stat-icon orange"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e8a84c" stroke-width="1.5"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><circle cx="7" cy="7" r="1.5"/></svg></div>
+              <span class="stat-badge down">↓ 3%</span>
+            </div>
+            <div class="stat-value">20</div>
+            <div class="stat-label">Products Listed</div>
+            <div class="stat-sub">10 summer, 10 classic</div>
+          </div>
+        </div>
+
+        <!-- CHARTS -->
+        <div class="charts-row">
+          <div class="chart-card">
+            <div class="chart-header">
+              <div><div class="chart-title">Revenue Overview</div><div class="chart-sub">Monthly earnings breakdown</div></div>
+              <div class="chart-filter">
+                <button class="chart-filter-btn active">6M</button>
+                <button class="chart-filter-btn">1Y</button>
+                <button class="chart-filter-btn">All</button>
+              </div>
+            </div>
+            <div class="bar-chart" id="revenue-chart"></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-header"><div><div class="chart-title">Sales by Category</div><div class="chart-sub">Current period</div></div></div>
+            <div class="donut-wrap">
+              <div class="donut">
+                <svg width="140" height="140" viewBox="0 0 140 140">
+                  <circle cx="70" cy="70" r="54" fill="none" stroke="#1e232d" stroke-width="18"/>
+                  <circle cx="70" cy="70" r="54" fill="none" stroke="#c9a84c" stroke-width="18" stroke-dasharray="136 203" stroke-linecap="round"/>
+                  <circle cx="70" cy="70" r="54" fill="none" stroke="#e8a84c" stroke-width="18" stroke-dasharray="81 258" stroke-dashoffset="-136" stroke-linecap="round"/>
+                  <circle cx="70" cy="70" r="54" fill="none" stroke="#5284c9" stroke-width="18" stroke-dasharray="54 285" stroke-dashoffset="-217" stroke-linecap="round"/>
+                  <circle cx="70" cy="70" r="54" fill="none" stroke="#9b6dff" stroke-width="18" stroke-dasharray="68 271" stroke-dashoffset="-271" stroke-linecap="round"/>
+                </svg>
+                <div class="donut-center"><div class="donut-pct">100%</div><div class="donut-pct-label">Total</div></div>
+              </div>
+              <div class="donut-legend">
+                <div class="legend-item"><div class="legend-dot" style="background:#c9a84c"></div><span class="legend-label">Summer</span><span class="legend-val">40%</span></div>
+                <div class="legend-item"><div class="legend-dot" style="background:#e8a84c"></div><span class="legend-label">Jackets</span><span class="legend-val">24%</span></div>
+                <div class="legend-item"><div class="legend-dot" style="background:#5284c9"></div><span class="legend-label">Coats</span><span class="legend-val">16%</span></div>
+                <div class="legend-item"><div class="legend-dot" style="background:#9b6dff"></div><span class="legend-label">Other</span><span class="legend-val">20%</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RECENT ORDERS -->
+        <div class="section-header">
+          <div class="section-title-sm">Recent Orders</div>
+          <button class="topbar-btn" onclick="navigate('orders')">View All Orders</button>
+        </div>
+        <div class="table-card">
+          <table>
+            <thead><tr><th>Order ID</th><th>Product</th><th>Customer</th><th>Date</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="recent-orders-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== ORDERS PAGE ===== -->
+      <div class="page" id="page-orders">
+        <div class="table-card">
+          <div class="table-toolbar">
+            <div class="table-search">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input type="text" placeholder="Search orders..." id="orders-search" oninput="filterOrders()"/>
+            </div>
+            <div class="table-filters">
+              <select class="filter-select" id="status-filter" onchange="filterOrders()">
+                <option value="all">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="processing">Processing</option>
+                <option value="shipped">Shipped</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+              <button class="topbar-btn" onclick="clearOrders()">Clear All</button>
+            </div>
+          </div>
+          <table>
+            <thead><tr><th>Order ID</th><th>Product</th><th>Customer</th><th>Size</th><th>Date</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="orders-tbody"></tbody>
+          </table>
+          <div class="pagination">
+            <div class="page-info" id="orders-page-info">Showing 0 orders</div>
+            <div class="page-btns"><button class="page-btn active">1</button><button class="page-btn">2</button><button class="page-btn">3</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== PRODUCTS PAGE ===== -->
+      <div class="page" id="page-products">
+        <div class="section-header" style="margin-bottom:1.5rem">
+          <div class="section-title-sm">All Products (20)</div>
+          <button class="topbar-btn primary" onclick="showAdminToast('Add product feature coming soon!')">+ Add Product</button>
+        </div>
+        <div class="products-admin-grid" id="products-admin-grid"></div>
+      </div>
+
+      <!-- ===== WALLET PAGE ===== -->
+      <div class="page" id="page-wallet">
+        <div class="wallet-grid">
+          <div class="wallet-card featured">
+            <div class="wallet-label" style="color:rgba(201,168,76,.7)">Total Balance</div>
+            <div class="wallet-amount gold" id="wallet-balance">$0.00</div>
+            <div class="wallet-change" id="wallet-change">↑ $0 this month</div>
+            <button class="withdraw-btn" onclick="showAdminToast('Withdrawal request sent!')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Withdraw Funds
+            </button>
+          </div>
+          <div class="wallet-card">
+            <div class="wallet-label">Total Revenue</div>
+            <div class="wallet-amount" id="wallet-revenue">$0.00</div>
+            <div class="wallet-change">↑ 18.2% from last month</div>
+          </div>
+          <div class="wallet-card">
+            <div class="wallet-label">Total Orders Value</div>
+            <div class="wallet-amount" id="wallet-orders-val">$0.00</div>
+            <div class="wallet-change down" id="wallet-txn-count">0 transactions</div>
+          </div>
+        </div>
+        <div class="section-header"><div class="section-title-sm">Transaction History</div></div>
+        <div class="table-card" style="padding:0 1.5rem">
+          <div id="txn-list"></div>
+          <div id="txn-empty" class="empty-state" style="display:none">
+            <svg class="empty-state-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M20 7H4a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/></svg>
+            <p>No transactions yet. Make some sales!</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== CUSTOMERS PAGE ===== -->
+      <div class="page" id="page-customers">
+        <div class="customer-stats">
+          <div class="stat-card"><div class="stat-header"><div class="stat-icon blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5284c9" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><span class="stat-badge up">↑ 12%</span></div><div class="stat-value">1,247</div><div class="stat-label">Total Customers</div></div>
+          <div class="stat-card"><div class="stat-header"><div class="stat-icon green"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4caf7d" stroke-width="1.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07"/><path d="M16.72 2.47a4 4 0 0 1 0 5.66l-9.25 9.24a4 4 0 0 1-5.66 0 4 4 0 0 1 0-5.66L11.06.47a4 4 0 0 1 5.66 0z"/></svg></div><span class="stat-badge up">↑ 5%</span></div><div class="stat-value">89%</div><div class="stat-label">Retention Rate</div></div>
+          <div class="stat-card"><div class="stat-header"><div class="stat-icon gold"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="1.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><span class="stat-badge up">↑ 8%</span></div><div class="stat-value">$847</div><div class="stat-label">Avg. Order Value</div></div>
+        </div>
+        <div class="table-card">
+          <table>
+            <thead><tr><th>#</th><th>Customer</th><th>Location</th><th>Orders</th><th>Total Spent</th><th>Joined</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td><span class="order-id">#001</span></td><td>Isabelle Martin</td><td>Paris, France</td><td>8</td><td>$12,480</td><td>Jan 2024</td><td><span class="status-badge delivered">VIP</span></td></tr>
+              <tr><td><span class="order-id">#002</span></td><td>James Kingston</td><td>London, UK</td><td>5</td><td>$7,340</td><td>Mar 2024</td><td><span class="status-badge shipped">Active</span></td></tr>
+              <tr><td><span class="order-id">#003</span></td><td>Aisha Rahman</td><td>Dubai, UAE</td><td>12</td><td>$24,900</td><td>Nov 2023</td><td><span class="status-badge delivered">VIP</span></td></tr>
+              <tr><td><span class="order-id">#004</span></td><td>Sofia Carvalho</td><td>Milan, Italy</td><td>3</td><td>$3,120</td><td>Jun 2024</td><td><span class="status-badge shipped">Active</span></td></tr>
+              <tr><td><span class="order-id">#005</span></td><td>Lucas Müller</td><td>Berlin, Germany</td><td>1</td><td>$495</td><td>Sep 2024</td><td><span class="status-badge processing">New</span></td></tr>
+              <tr><td><span class="order-id">#006</span></td><td>Yuki Tanaka</td><td>Tokyo, Japan</td><td>6</td><td>$9,840</td><td>Feb 2024</td><td><span class="status-badge delivered">VIP</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== ANALYTICS PAGE ===== -->
+      <div class="page" id="page-analytics">
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-header"><div class="stat-icon gold"></div><span class="stat-badge up">↑ 22%</span></div><div class="stat-value">94.3K</div><div class="stat-label">Page Views</div></div>
+          <div class="stat-card"><div class="stat-header"><div class="stat-icon blue"></div><span class="stat-badge up">↑ 15%</span></div><div class="stat-value">3.2%</div><div class="stat-label">Conversion Rate</div></div>
+          <div class="stat-card"><div class="stat-header"><div class="stat-icon green"></div><span class="stat-badge down">↓ 4%</span></div><div class="stat-value">2m 38s</div><div class="stat-label">Avg. Session</div></div>
+          <div class="stat-card"><div class="stat-header"><div class="stat-icon orange"></div><span class="stat-badge up">↑ 9%</span></div><div class="stat-value">62%</div><div class="stat-label">Return Visitors</div></div>
+        </div>
+        <div class="analytics-row">
+          <div class="chart-card">
+            <div class="chart-header"><div><div class="chart-title">Top Selling Products</div><div class="chart-sub">By revenue generated</div></div></div>
+            <div id="top-products-list"></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-header"><div><div class="chart-title">Traffic Sources</div><div class="chart-sub">Where customers come from</div></div></div>
+            <div style="margin-top:.5rem">
+              <div style="margin-bottom:1.25rem"><div style="display:flex;justify-content:space-between;font-size:.78rem;color:var(--text);margin-bottom:.4rem"><span>Organic Search</span><span style="color:var(--green)">42%</span></div><div class="mini-chart-bar"><div class="mini-chart-fill" style="width:42%;background:var(--green)"></div></div></div>
+              <div style="margin-bottom:1.25rem"><div style="display:flex;justify-content:space-between;font-size:.78rem;color:var(--text);margin-bottom:.4rem"><span>Instagram</span><span style="color:var(--gold)">28%</span></div><div class="mini-chart-bar"><div class="mini-chart-fill" style="width:28%;background:var(--gold)"></div></div></div>
+              <div style="margin-bottom:1.25rem"><div style="display:flex;justify-content:space-between;font-size:.78rem;color:var(--text);margin-bottom:.4rem"><span>Direct</span><span style="color:var(--blue)">18%</span></div><div class="mini-chart-bar"><div class="mini-chart-fill" style="width:18%;background:var(--blue)"></div></div></div>
+              <div style="margin-bottom:1.25rem"><div style="display:flex;justify-content:space-between;font-size:.78rem;color:var(--text);margin-bottom:.4rem"><span>Referral</span><span style="color:var(--purple)">12%</span></div><div class="mini-chart-bar"><div class="mini-chart-fill" style="width:12%;background:var(--purple)"></div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== SETTINGS PAGE ===== -->
+      <div class="page" id="page-settings">
+        <div class="settings-grid">
+          <div class="settings-card">
+            <div class="settings-section-title">Store Information</div>
+            <div class="form-group"><label class="form-label">Brand Name</label><input class="form-input" type="text" value="NOIRE Maison"/></div>
+            <div class="form-group"><label class="form-label">Tagline</label><input class="form-input" type="text" value="Luxury Fashion House — Est. 2009"/></div>
+            <div class="form-group"><label class="form-label">Support Email</label><input class="form-input" type="email" value="hello@noire.com"/></div>
+            <div class="form-group"><label class="form-label">Currency</label><input class="form-input" type="text" value="USD ($)"/></div>
+            <button class="topbar-btn primary" style="margin-top:.5rem" onclick="showAdminToast('Settings saved!')">Save Changes</button>
+          </div>
+          <div class="settings-card">
+            <div class="settings-section-title">Notifications</div>
+            <div class="form-toggle"><div class="toggle-info"><div class="toggle-label">New Order Alerts</div><div class="toggle-sub">Get notified when an order is placed</div></div><div class="toggle-switch on" onclick="this.classList.toggle('on')"></div></div>
+            <div class="form-toggle"><div class="toggle-info"><div class="toggle-label">Low Stock Alerts</div><div class="toggle-sub">Alert when product stock is low</div></div><div class="toggle-switch on" onclick="this.classList.toggle('on')"></div></div>
+            <div class="form-toggle"><div class="toggle-info"><div class="toggle-label">Customer Reviews</div><div class="toggle-sub">New review submitted</div></div><div class="toggle-switch" onclick="this.classList.toggle('on')"></div></div>
+            <div class="form-toggle"><div class="toggle-info"><div class="toggle-label">Weekly Reports</div><div class="toggle-sub">Email report every Monday</div></div><div class="toggle-switch on" onclick="this.classList.toggle('on')"></div></div>
+          </div>
+          <div class="settings-card">
+            <div class="settings-section-title">Payment & Shipping</div>
+            <div class="form-group"><label class="form-label">Free Shipping Threshold</label><input class="form-input" type="text" value="$500"/></div>
+            <div class="form-group"><label class="form-label">Standard Shipping Rate</label><input class="form-input" type="text" value="$25.00"/></div>
+            <div class="form-group"><label class="form-label">Express Shipping Rate</label><input class="form-input" type="text" value="$65.00"/></div>
+            <button class="topbar-btn primary" style="margin-top:.5rem" onclick="showAdminToast('Shipping settings saved!')">Save Changes</button>
+          </div>
+          <div class="settings-card">
+            <div class="settings-section-title">Store Features</div>
+            <div class="form-toggle"><div class="toggle-info"><div class="toggle-label">Summer Collection</div><div class="toggle-sub">Show Summer 2026 section</div></div><div class="toggle-switch on" onclick="this.classList.toggle('on')"></div></div>
+            <div class="form-toggle"><div class="toggle-info"><div class="toggle-label">Newsletter Popup</div><div class="toggle-sub">Show email signup prompt</div></div><div class="toggle-switch on" onclick="this.classList.toggle('on')"></div></div>
+            <div class="form-toggle"><div class="toggle-info"><div class="toggle-label">Wishlist Feature</div><div class="toggle-sub">Allow customers to save items</div></div><div class="toggle-switch on" onclick="this.classList.toggle('on')"></div></div>
+            <div class="form-toggle"><div class="toggle-info"><div class="toggle-label">Maintenance Mode</div><div class="toggle-sub">Temporarily close the store</div></div><div class="toggle-switch" onclick="this.classList.toggle('on')"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="admin-toast" style="position:fixed;bottom:2rem;right:2rem;z-index:9999;background:var(--surface);border:1px solid var(--gold);padding:1rem 1.5rem;border-radius:8px;display:flex;align-items:center;gap:.75rem;transform:translateX(120%);transition:transform .5s cubic-bezier(.16,1,.3,1);max-width:320px">
+    <span style="color:var(--gold)">✦</span>
+    <span style="font-size:.8rem;color:var(--cream)" id="admin-toast-text">Action complete</span>
+  </div>
+
+  <script>
+    // ===== PRODUCT DATA (mirrored from store) =====
+    const BASE = "C:\\Users\\Mudassar\\.gemini\\antigravity\\brain\\218b52af-0220-4882-af1d-927ee3539fb5\\";
+    const allProducts = [
+      {id:101,name:"White Linen Shirt",price:420,category:"Summer",stock:"In Stock",img:BASE+"summer1_1789509412989.jpg"},
+      {id:102,name:"Sand Wide-Leg Trousers",price:580,category:"Summer",stock:"In Stock",img:BASE+"summer2_1789509423893.jpg"},
+      {id:103,name:"Terracotta Camp Shirt",price:390,category:"Summer",stock:"Low Stock",img:BASE+"summer3_1789509433366.jpg"},
+      {id:104,name:"Sage Silk Slip Dress",price:1180,category:"Summer",stock:"In Stock",img:BASE+"summer4_1789509443324.jpg"},
+      {id:105,name:"Ivory Bermuda Shorts",price:340,category:"Summer",stock:"In Stock",img:BASE+"summer5_1789509460418.jpg"},
+      {id:106,name:"Sky Linen Blazer",price:880,category:"Summer",stock:"Low Stock",img:BASE+"summer6_1789509471549.jpg"},
+      {id:107,name:"Olive Co-ord Set",price:1340,category:"Summer",stock:"In Stock",img:BASE+"summer7_1789509481386.jpg"},
+      {id:108,name:"Rose Linen Midi Skirt",price:490,category:"Summer",stock:"Out of Stock",img:BASE+"summer8_1789509492081.jpg"},
+      {id:1,name:"Noir Structured Blazer",price:1240,category:"Jackets",stock:"In Stock",img:BASE+"product1_1785387225143.jpg"},
+      {id:2,name:"Ivory Cashmere Coat",price:2890,category:"Coats",stock:"In Stock",img:BASE+"product2_1785387244197.jpg"},
+      {id:3,name:"Navy Tailored Trousers",price:680,category:"Trousers",stock:"In Stock",img:BASE+"product3_1785387262518.jpg"},
+      {id:4,name:"Onyx Turtleneck",price:495,category:"Knitwear",stock:"In Stock",img:BASE+"product4_1785387274414.jpg"},
+      {id:5,name:"Obsidian Field Jacket",price:1580,category:"Jackets",stock:"Low Stock",img:BASE+"product1_1785387225143.jpg"},
+      {id:6,name:"Smoke Palazzo Trousers",price:780,category:"Trousers",stock:"In Stock",img:BASE+"product3_1785387262518.jpg"},
+      {id:7,name:"The Arc Overcoat",price:3200,category:"Coats",stock:"In Stock",img:BASE+"product2_1785387244197.jpg"},
+      {id:8,name:"Dusk Ribbed Sweater",price:560,category:"Knitwear",stock:"In Stock",img:BASE+"product4_1785387274414.jpg"},
+      {id:9,name:"Sage Linen Dress",price:920,category:"Dresses",stock:"In Stock",img:BASE+"summer4_1789509443324.jpg"},
+      {id:10,name:"Ivory Slip Midi",price:1100,category:"Dresses",stock:"Low Stock",img:BASE+"summer8_1789509492081.jpg"},
+    ];
+
+    const demoOrders = [
+      {id:'ORD-'+Date.now()+1,product:"Sage Silk Slip Dress",size:"M",price:1180,status:"delivered",date:"Sep 14, 2026",customer:"Isabelle Martin",img:BASE+"summer4_1789509443324.jpg"},
+      {id:'ORD-'+Date.now()+2,product:"Noir Structured Blazer",size:"L",price:1240,status:"shipped",date:"Sep 13, 2026",customer:"James Kingston",img:BASE+"product1_1785387225143.jpg"},
+      {id:'ORD-'+Date.now()+3,product:"Ivory Cashmere Coat",size:"M",price:2890,status:"processing",date:"Sep 12, 2026",customer:"Aisha Rahman",img:BASE+"product2_1785387244197.jpg"},
+      {id:'ORD-'+Date.now()+4,product:"White Linen Shirt",size:"S",price:420,status:"pending",date:"Sep 12, 2026",customer:"Sofia Carvalho",img:BASE+"summer1_1789509412989.jpg"},
+      {id:'ORD-'+Date.now()+5,product:"Olive Co-ord Set",size:"XS",price:1340,status:"delivered",date:"Sep 10, 2026",customer:"Yuki Tanaka",img:BASE+"summer7_1789509481386.jpg"},
+    ];
+
+    // ===== LOAD REAL DATA FROM STORE =====
+    function getOrders() {
+      const stored = JSON.parse(localStorage.getItem('noire_orders')||'[]');
+      return [...stored, ...demoOrders];
+    }
+    function getWallet() {
+      return JSON.parse(localStorage.getItem('noire_wallet')||'{"balance":0,"transactions":[]}');
+    }
+
+    // ===== NAVIGATION =====
+    const pages = { dashboard:'Dashboard', orders:'Orders', products:'Products', wallet:'Wallet', customers:'Customers', analytics:'Analytics', settings:'Settings' };
+    function navigate(page) {
+      document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+      document.querySelector(`[data-page="${page}"]`)?.classList.add('active');
+      document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+      document.getElementById(`page-${page}`)?.classList.add('active');
+      document.getElementById('topbar-title').textContent = pages[page]||page;
+      document.getElementById('topbar-breadcrumb').textContent = `NOIRE Admin → ${pages[page]||page}`;
+      if(page==='orders') renderOrders();
+      if(page==='wallet') renderWallet();
+      if(page==='products') renderProductsAdmin();
+      if(page==='analytics') renderTopProducts();
+      if(page==='dashboard') renderDashboard();
+    }
+    document.querySelectorAll('[data-page]').forEach(btn=>btn.addEventListener('click',()=>navigate(btn.dataset.page)));
+
+    // ===== DASHBOARD =====
+    function renderDashboard() {
+      const orders = getOrders();
+      const wallet = getWallet();
+      const revenue = orders.reduce((a,b)=>a+b.price,0);
+      document.getElementById('dash-revenue').textContent = '$'+(revenue||48250).toLocaleString();
+      document.getElementById('dash-orders').textContent = (orders.length||0).toLocaleString();
+      document.getElementById('orders-badge').textContent = orders.filter(o=>o.status==='pending').length||0;
+      renderRecentOrders(orders.slice(0,5));
+      renderBarChart();
+    }
+
+    function renderRecentOrders(orders) {
+      const tbody = document.getElementById('recent-orders-tbody');
+      if(!orders.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted)">No orders yet. Make some sales!</td></tr>';return;}
+      tbody.innerHTML = orders.slice(0,5).map(o=>`
+        <tr>
+          <td><span class="order-id">${o.id}</span></td>
+          <td><div class="product-cell"><img class="product-thumb" src="${o.img}" alt="${o.product}"/><div><div class="product-cell-name">${o.product}</div><div class="product-cell-sub">Size: ${o.size}</div></div></div></td>
+          <td>${o.customer}</td>
+          <td>${o.date}</td>
+          <td>$${o.price.toLocaleString()}</td>
+          <td><span class="status-badge ${o.status}">${o.status.charAt(0).toUpperCase()+o.status.slice(1)}</span></td>
+          <td><button class="action-btn" onclick="showAdminToast('Order details: ${o.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button></td>
+        </tr>`).join('');
+    }
+
+    // ===== ORDERS PAGE =====
+    let ordersData = [];
+    function renderOrders() {
+      ordersData = getOrders();
+      document.getElementById('orders-badge').textContent = ordersData.filter(o=>o.status==='pending').length;
+      filterOrders();
+    }
+    function filterOrders() {
+      const search = document.getElementById('orders-search')?.value?.toLowerCase()||'';
+      const status = document.getElementById('status-filter')?.value||'all';
+      const filtered = ordersData.filter(o=>{
+        const matchSearch = !search || o.product.toLowerCase().includes(search) || o.customer.toLowerCase().includes(search) || o.id.toLowerCase().includes(search);
+        const matchStatus = status==='all' || o.status===status;
+        return matchSearch && matchStatus;
+      });
+      const tbody = document.getElementById('orders-tbody');
+      document.getElementById('orders-page-info').textContent = `Showing ${filtered.length} order${filtered.length!==1?'s':''}`;
+      if(!filtered.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:3rem;color:var(--text-muted)">No orders found</td></tr>';return;}
+      tbody.innerHTML = filtered.map(o=>`
+        <tr>
+          <td><span class="order-id">${o.id}</span></td>
+          <td><div class="product-cell"><img class="product-thumb" src="${o.img}" alt="${o.product}"/><div><div class="product-cell-name">${o.product}</div></div></div></td>
+          <td>${o.customer}</td>
+          <td>${o.size}</td>
+          <td>${o.date}</td>
+          <td>$${o.price.toLocaleString()}</td>
+          <td>
+            <select class="filter-select" style="font-size:.65rem;padding:.2rem .5rem" onchange="updateOrderStatus('${o.id}',this.value)">
+              ${['pending','processing','shipped','delivered','cancelled'].map(s=>`<option value="${s}" ${o.status===s?'selected':''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`).join('')}
+            </select>
+          </td>
+          <td style="display:flex;gap:.3rem">
+            <button class="action-btn" onclick="showAdminToast('Viewing order ${o.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+            <button class="action-btn danger" onclick="deleteOrder('${o.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+          </td>
+        </tr>`).join('');
+    }
+
+    function updateOrderStatus(id, status) {
+      const stored = JSON.parse(localStorage.getItem('noire_orders')||'[]');
+      const idx = stored.findIndex(o=>o.id===id);
+      if(idx>=0){stored[idx].status=status;localStorage.setItem('noire_orders',JSON.stringify(stored));}
+      showAdminToast(`Order ${id} → ${status}`);
+    }
+
+    function deleteOrder(id) {
+      const stored = JSON.parse(localStorage.getItem('noire_orders')||'[]');
+      localStorage.setItem('noire_orders', JSON.stringify(stored.filter(o=>o.id!==id)));
+      renderOrders();
+      showAdminToast('Order removed');
+    }
+
+    function clearOrders() {
+      localStorage.removeItem('noire_orders');
+      renderOrders();
+      showAdminToast('All store orders cleared');
+    }
+
+    // ===== WALLET =====
+    function renderWallet() {
+      const wallet = getWallet();
+      const orders = getOrders();
+      const total = orders.reduce((a,b)=>a+b.price,0);
+      document.getElementById('wallet-balance').textContent = '$'+(total||48250).toLocaleString();
+      document.getElementById('wallet-revenue').textContent = '$'+(total||48250).toLocaleString();
+      document.getElementById('wallet-orders-val').textContent = '$'+(total||48250).toLocaleString();
+      const txns = [...wallet.transactions, ...getDefaultTxns()];
+      document.getElementById('wallet-txn-count').textContent = `↑ ${txns.length} transactions total`;
+      const txnList = document.getElementById('txn-list');
+      const txnEmpty = document.getElementById('txn-empty');
+      if(!txns.length){txnList.innerHTML='';txnEmpty.style.display='flex';return;}
+      txnEmpty.style.display='none';
+      txnList.innerHTML = txns.slice(0,15).map(t=>`
+        <div class="txn-item">
+          <div class="txn-icon credit"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+          <div class="txn-info"><div class="txn-name">${t.desc||t.product||'Sale'}</div><div class="txn-date">${t.date}</div></div>
+          <div class="txn-amount credit">+$${(t.amount||t.price||0).toLocaleString()}</div>
+        </div>`).join('');
+    }
+
+    function getDefaultTxns(){
+      return [
+        {desc:"Ivory Cashmere Coat - Sale",amount:2890,date:"Sep 14, 2026"},
+        {desc:"Noir Structured Blazer - Sale",amount:1240,date:"Sep 13, 2026"},
+        {desc:"Sage Silk Slip Dress - Sale",amount:1180,date:"Sep 12, 2026"},
+        {desc:"Olive Co-ord Set - Sale",amount:1340,date:"Sep 10, 2026"},
+        {desc:"Sky Linen Blazer - Sale",amount:880,date:"Sep 9, 2026"},
+      ];
+    }
+
+    // ===== PRODUCTS ADMIN =====
+    function renderProductsAdmin() {
+      const grid = document.getElementById('products-admin-grid');
+      grid.innerHTML = allProducts.map(p=>{
+        const stockClass = p.stock==='In Stock'?'in':p.stock==='Low Stock'?'low':'out';
+        return `<div class="product-admin-card">
+          <div class="product-admin-img"><img src="${p.img}" alt="${p.name}"/></div>
+          <div class="product-admin-info">
+            <div class="product-admin-name">${p.name}</div>
+            <div class="product-admin-price">$${p.price.toLocaleString()}</div>
+            <div class="product-admin-stock"><span class="stock-dot ${stockClass}"></span>${p.stock} · ${p.category}</div>
+          </div>
+          <div class="product-admin-actions">
+            <button class="prod-action-btn" onclick="showAdminToast('Editing ${p.name}')">Edit</button>
+            <button class="prod-action-btn danger" onclick="showAdminToast('${p.name} removed')">Remove</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // ===== TOP PRODUCTS ANALYTICS =====
+    function renderTopProducts() {
+      const top = [
+        {name:"Ivory Cashmere Coat",sales:"14 sales",rev:40460,img:BASE+"product2_1785387244197.jpg"},
+        {name:"Sage Silk Slip Dress",sales:"32 sales",rev:37760,img:BASE+"summer4_1789509443324.jpg"},
+        {name:"Noir Structured Blazer",sales:"28 sales",rev:34720,img:BASE+"product1_1785387225143.jpg"},
+        {name:"Olive Co-ord Set",sales:"24 sales",rev:32160,img:BASE+"summer7_1789509481386.jpg"},
+        {name:"Sky Linen Blazer",sales:"35 sales",rev:30800,img:BASE+"summer6_1789509471549.jpg"},
+      ];
+      document.getElementById('top-products-list').innerHTML = top.map((p,i)=>`
+        <div class="top-product-item">
+          <span class="top-product-rank">${i+1}</span>
+          <img class="top-product-img" src="${p.img}" alt="${p.name}"/>
+          <div class="top-product-info"><div class="top-product-name">${p.name}</div><div class="top-product-sales">${p.sales}</div></div>
+          <div class="top-product-rev">$${p.rev.toLocaleString()}</div>
+        </div>`).join('');
+    }
+
+    // ===== BAR CHART =====
+    function renderBarChart() {
+      const data = [
+        {label:'Apr',val:28400,color:'#c9a84c88'},
+        {label:'May',val:35200,color:'#c9a84c88'},
+        {label:'Jun',val:42100,color:'#c9a84c88'},
+        {label:'Jul',val:38900,color:'#c9a84c88'},
+        {label:'Aug',val:51600,color:'#c9a84c'},
+        {label:'Sep',val:48250,color:'#c9a84c'},
+      ];
+      const max = Math.max(...data.map(d=>d.val));
+      document.getElementById('revenue-chart').innerHTML = data.map(d=>`
+        <div class="bar-wrap">
+          <div class="bar" style="height:${(d.val/max*100)}%;background:${d.color}" data-val="$${d.val.toLocaleString()}"></div>
+          <span class="bar-label">${d.label}</span>
+        </div>`).join('');
+      document.querySelectorAll('.chart-filter-btn').forEach(btn=>{
+        btn.addEventListener('click',()=>{document.querySelectorAll('.chart-filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');});
+      });
+    }
+
+    // ===== TOAST =====
+    function showAdminToast(msg) {
+      const t=document.getElementById('admin-toast'); document.getElementById('admin-toast-text').textContent=msg; t.style.transform='translateX(0)';
+      setTimeout(()=>t.style.transform='translateX(120%)',3000);
+    }
+
+    // ===== INIT =====
+    renderDashboard();
+
+    // Auto-refresh from store
+    window.addEventListener('focus', ()=>{ renderDashboard(); if(document.getElementById('page-orders').classList.contains('active')) renderOrders(); if(document.getElementById('page-wallet').classList.contains('active')) renderWallet(); });
+  </script>
+</body>
+</html>

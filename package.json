@@ -1,0 +1,17 @@
+{
+  "name": "noire-ecom",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod",
+    "db:schema": "echo 'Run supabase/schema.sql in your Supabase SQL editor'"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.119.0"
+  },
+  "devDependencies": {
+    "vercel": "^37.14.0"
+  }
+}
