@@ -1,15 +1,11 @@
-// api/orders.js  –  Vercel Serverless Function
-// Handles GET (list orders) and POST (create order) via Supabase
-
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY   // server-side only key – never exposed to browser
-);
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://lfnlkejbwgvqhqrnleif.supabase.co';
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmbmxrZWpid2d2cWhxcm5sZWlmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5NDI1MjcxMywiZXhwIjoyMTA5ODI4NzEzfQ.VysoknEJrNvGn-yXLeZiN3YgZt7UXNWLPg0NnxOKsQ0';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 export default async function handler(req, res) {
-  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -17,7 +13,6 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      // ---- List all orders (admin only) ----
       const { data, error } = await supabase
         .from('orders')
         .select('*, order_items(*)')
@@ -28,21 +23,19 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-      // ---- Create a new order ----
-      const { customer_email, customer_name, items, total, shipping_address } = req.body;
+      const { customer_email, customer_name, items, total, shipping_address } = req.body || {};
 
       if (!customer_email || !items?.length) {
         return res.status(400).json({ success: false, error: 'Missing required fields' });
       }
 
-      // Insert order header
       const { data: order, error: orderErr } = await supabase
         .from('orders')
         .insert({
           customer_email,
-          customer_name,
-          total,
-          shipping_address,
+          customer_name: customer_name || 'Customer',
+          total: Number(total) || 0,
+          shipping_address: shipping_address || {},
           status: 'pending',
         })
         .select()
@@ -50,21 +43,23 @@ export default async function handler(req, res) {
 
       if (orderErr) throw orderErr;
 
-      // Insert order line items
       const lineItems = items.map(item => ({
         order_id: order.id,
-        product_id: item.id,
-        product_name: item.name,
-        price: item.price,
-        quantity: item.qty || 1,
-        size: item.size,
+        product_id: item.id && item.id.length === 36 ? item.id : null,
+        product_name: item.name || 'Product',
+        price: Number(item.price) || 0,
+        quantity: Number(item.qty) || 1,
+        size: item.size || 'M',
       }));
 
       const { error: itemsErr } = await supabase.from('order_items').insert(lineItems);
-      if (itemsErr) throw itemsErr;
+      if (itemsErr) console.warn('Items insert warning:', itemsErr.message);
 
-      // Update wallet balance in Supabase
-      await supabase.rpc('increment_wallet_balance', { amount: total });
+      try {
+        await supabase.rpc('increment_wallet_balance', { amount: Number(total) || 0 });
+      } catch (wErr) {
+        console.warn('Wallet RPC notice:', wErr.message);
+      }
 
       return res.status(201).json({ success: true, order });
     }

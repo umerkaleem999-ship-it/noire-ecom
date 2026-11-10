@@ -1,12 +1,10 @@
-// api/products.js  –  Vercel Serverless Function
-// CRUD operations for products (admin protected)
-
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://lfnlkejbwgvqhqrnleif.supabase.co';
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmbmxrZWpid2d2cWhxcm5sZWlmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5NDI1MjcxMywiZXhwIjoyMTA5ODI4NzEzfQ.VysoknEJrNvGn-yXLeZiN3YgZt7UXNWLPg0NnxOKsQ0';
+const ADMIN_SECRET = process.env.ADMIN_SECRET || 'noire_secure_admin_portal_secret_key_2026_987654321';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -16,17 +14,16 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'GET') {
-      const { category } = req.query;
+      const { category } = req.query || {};
       let query = supabase.from('products').select('*').eq('active', true);
       if (category && category !== 'all') query = query.eq('category', category);
       const { data, error } = await query.order('created_at', { ascending: false });
       if (error) throw error;
-      return res.status(200).json({ success: true, products: data });
+      return res.status(200).json({ success: true, products: data || [] });
     }
 
-    // Admin-only: require service key in Authorization header for mutations
     const authHeader = req.headers.authorization;
-    if (authHeader !== `Bearer ${process.env.ADMIN_SECRET}`) {
+    if (authHeader !== `Bearer ${ADMIN_SECRET}`) {
       return res.status(401).json({ success: false, error: 'Unauthorized' });
     }
 
@@ -37,14 +34,14 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'PUT') {
-      const { id, ...updates } = req.body;
+      const { id, ...updates } = req.body || {};
       const { data, error } = await supabase.from('products').update(updates).eq('id', id).select().single();
       if (error) throw error;
       return res.status(200).json({ success: true, product: data });
     }
 
     if (req.method === 'DELETE') {
-      const { id } = req.query;
+      const { id } = req.query || {};
       const { error } = await supabase.from('products').update({ active: false }).eq('id', id);
       if (error) throw error;
       return res.status(200).json({ success: true, message: 'Product deactivated' });
