@@ -3,8 +3,8 @@
 
 // ── Supabase public (anon) credentials ───────────────────
 // These are SAFE to expose in the frontend (anon key has RLS restrictions)
-const SUPABASE_URL     = 'https://YOUR_PROJECT_ID.supabase.co';  // ← replace
-const SUPABASE_ANON_KEY = 'your_anon_key_here';                   // ← replace
+const SUPABASE_URL     = 'https://lfnlkejbwgvqhqrnleif.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmbmxrZWpid2d2cWhxcm5sZWlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQyNTI3MTMsImV4cCI6MjEwOTgyODcxM30.GS4kP9j5yFhorCuad5eNZFv0p9hzYexG0S9du_7ymeg';
 
 // ── API base (Vercel serverless functions) ────────────────
 const API_BASE = window.location.origin;   // same domain on Vercel
